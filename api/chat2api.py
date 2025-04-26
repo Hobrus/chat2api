@@ -12,7 +12,7 @@ from app import app, templates, security_scheme
 from chatgpt.ChatService import ChatService
 from chatgpt.authorization import refresh_all_tokens
 from utils.Logger import logger
-from utils.configs import api_prefix, scheduled_refresh
+from utils.configs import enable_gateway, api_prefix, scheduled_refresh
 from utils.retry import async_retry
 
 scheduler = AsyncIOScheduler()
@@ -21,10 +21,19 @@ scheduler = AsyncIOScheduler()
 @app.on_event("startup")
 async def app_start():
     if scheduled_refresh:
-        scheduler.add_job(id='refresh', func=refresh_all_tokens, trigger='cron', hour=3, minute=0, day='*/2',
-                          kwargs={'force_refresh': True})
+        scheduler.add_job(
+            id='refresh',
+            func=refresh_all_tokens,
+            trigger='cron',
+            hour=3,
+            minute=0,
+            day='*/2',
+            kwargs={'force_refresh': True}
+        )
         scheduler.start()
-        asyncio.get_event_loop().call_later(0, lambda: asyncio.create_task(refresh_all_tokens(force_refresh=False)))
+        asyncio.get_event_loop().call_later(
+            0, lambda: asyncio.create_task(refresh_all_tokens(force_refresh=False))
+        )
 
 
 async def to_send_conversation(request_data, req_token):
@@ -134,3 +143,107 @@ async def clear_seed_tokens():
         f.write("{}")
     logger.info(f"Seed token count: {len(globals.seed_map)}")
     return {"status": "success", "seed_tokens_count": len(globals.seed_map)}
+
+
+# ------------------------------------------------------------------------
+#                НОВЫЙ МАРШРУТ ДЛЯ /v1/models -- список моделей
+# ------------------------------------------------------------------------
+@app.get(f"/{api_prefix}/v1/models" if api_prefix else "/v1/models")
+async def get_models_v0():
+    """
+    Возвращает список доступных моделей в стиле OpenAI.
+    """
+    models_v0 = [
+        {
+            "id": "gpt-4o-mini",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        },
+        {
+            "id": "gpt-4o",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        },
+        {
+            "id": "gpt-4",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        },
+        {
+            "id": "o1-pro",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        },
+        {
+            "id": "o1-mini",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        },
+        {
+            "id": "o1",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        },
+        {
+            "id": "o3",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        },
+        {
+            "id": "o4-mini-high",
+            "object": "model",
+            "type": "llm",
+            "publisher": "openai",
+            "arch": "gpt",
+            "compatibility_type": "openai",
+            "quantization": "none",
+            "state": "loaded",
+            "max_context_length": 128000
+        }
+    ]
+    return {
+        "object": "list",
+        "data": models_v0
+    }
