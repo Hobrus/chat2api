@@ -11,8 +11,7 @@ with open("templates/initialize.json", "r") as f:
     initialize_json = json.load(f)
 
 
-@app.post("/v1/initialize")
-async def initialize(request: Request):
+async def initialize_handler(request: Request):
     initialize_response = (await chatgpt_reverse_proxy(request, f"v1/initialize"))
     if not initialize_response:
         return Response(status_code=204)
@@ -25,9 +24,28 @@ async def initialize(request: Request):
     return Response(content=json.dumps(initialize_json, indent=4), media_type="application/json")
 
 
-@app.post("/v1/rgstr")
-async def rgstr():
+@app.post("/v1/initialize")
+async def initialize_v1(request: Request):
+    return await initialize_handler(request)
+
+
+@app.post("/v0/initialize")
+async def initialize_v0(request: Request):
+    return await initialize_handler(request)
+
+
+async def rgstr_handler():
     return Response(status_code=202, content=json.dumps({"success": True}, indent=4), media_type="application/json")
+
+
+@app.post("/v1/rgstr")
+async def rgstr_v1():
+    return await rgstr_handler()
+
+
+@app.post("/v0/rgstr")
+async def rgstr_v0():
+    return await rgstr_handler()
 
 
 @app.get("/ces/v1/projects/oai/settings")
@@ -41,5 +59,5 @@ async def ces_v1():
 
 
 @app.post("/ces/statsc/flush")
-async def ces_v1():
+async def ces_statsc_flush():
     return Response(status_code=200, content=json.dumps({"success": True}, indent=4), media_type="application/json")

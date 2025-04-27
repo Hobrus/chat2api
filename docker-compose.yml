@@ -43,6 +43,10 @@ services:
       - internal_network  # chat2api 和 warp 在同一个内部网络
     volumes:
       - ./data:/app/data # 挂载一些需要保存的数据
+      - ./app.py:/app/app.py # Монтируем исправленный app.py
+      - ./api/chat2api.py:/app/api/chat2api.py # Монтируем исправленный chat2api.py
+      - ./gateway/reverseProxy.py:/app/gateway/reverseProxy.py # Монтируем исправленный reverseProxy.py
+      - ./gateway/v1.py:/app/gateway/v1.py # Монтируем исправленный v1.py
 
   watchtower:
     image: containrrr/watchtower
@@ -51,7 +55,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --cleanup --interval 300 chat2api
-    
+
 networks:
   internal_network:
     driver: bridge  # 定义一个桥接网络

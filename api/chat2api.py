@@ -58,8 +58,8 @@ async def process(request_data, req_token):
     return chat_service, res
 
 
-@app.post(f"/{api_prefix}/v1/chat/completions" if api_prefix else "/v1/chat/completions")
-async def send_conversation(request: Request, credentials: HTTPAuthorizationCredentials = Security(security_scheme)):
+# Define a function for the chat completions endpoint that handles both v0 and v1
+async def handle_chat_completions(request: Request, credentials: HTTPAuthorizationCredentials = Security(security_scheme)):
     req_token = credentials.credentials
     try:
         request_data = await request.json()
@@ -83,6 +83,17 @@ async def send_conversation(request: Request, credentials: HTTPAuthorizationCred
         await chat_service.close_client()
         logger.error(f"Server error, {str(e)}")
         raise HTTPException(status_code=500, detail="Server error")
+
+
+# Register the handler for both v0 and v1 endpoints
+@app.post(f"/{api_prefix}/v1/chat/completions" if api_prefix else "/v1/chat/completions")
+async def send_conversation_v1(request: Request, credentials: HTTPAuthorizationCredentials = Security(security_scheme)):
+    return await handle_chat_completions(request, credentials)
+
+
+@app.post(f"/{api_prefix}/api/v0/chat/completions" if api_prefix else "/api/v0/chat/completions")
+async def send_conversation_v0(request: Request, credentials: HTTPAuthorizationCredentials = Security(security_scheme)):
+    return await handle_chat_completions(request, credentials)
 
 
 @app.get(f"/{api_prefix}/tokens" if api_prefix else "/tokens", response_class=HTMLResponse)
@@ -146,14 +157,13 @@ async def clear_seed_tokens():
 
 
 # ------------------------------------------------------------------------
-#                НОВЫЙ МАРШРУТ ДЛЯ /v1/models -- список моделей
+#                MODELS ENDPOINT FOR BOTH V0 AND V1
 # ------------------------------------------------------------------------
-@app.get(f"/{api_prefix}/v1/models" if api_prefix else "/v1/models")
-async def get_models_v0():
+async def get_models_handler():
     """
-    Возвращает список доступных моделей в стиле OpenAI.
+    Returns a list of available models in OpenAI style.
     """
-    models_v0 = [
+    models_data = [
         {
             "id": "gpt-4o-mini",
             "object": "model",
@@ -245,5 +255,13 @@ async def get_models_v0():
     ]
     return {
         "object": "list",
-        "data": models_v0
+        "data": models_data
     }
+
+@app.get(f"/{api_prefix}/v1/models" if api_prefix else "/api/v1/models")
+async def get_models_v1():
+    return await get_models_handler()
+
+@app.get(f"/{api_prefix}/api/v0/models" if api_prefix else "/api/v0/models")
+async def get_models_v0():
+    return await get_models_handler()

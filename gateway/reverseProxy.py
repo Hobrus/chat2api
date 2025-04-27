@@ -196,6 +196,10 @@ async def chatgpt_reverse_proxy(request: Request, path: str):
             base_url = "https://cdn.oaistatic.com"
         if "file-" in path and "backend-api" not in path:
             base_url = "https://files.oaiusercontent.com"
+        # Handle both v0 and v1 routes
+        if "v0/" in path:
+            # Replace v0 with v1 in the path for the actual API call
+            path = path.replace("v0/", "v1/")
         if "v1/" in path:
             base_url = "https://ab.chatgpt.com"
         if "sandbox" in path:
@@ -225,7 +229,7 @@ async def chatgpt_reverse_proxy(request: Request, path: str):
             "origin": base_url,
             "referer": f"{base_url}/"
         })
-        if "v1/initialize" in path:
+        if "v1/initialize" in path or "v0/initialize" in path:
             headers.update({"user-agent": request.headers.get("user-agent")})
             if "statsig-api-key" not in headers:
                 headers.update({
